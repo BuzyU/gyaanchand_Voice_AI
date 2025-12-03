@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: gyaanchand-backend
+    env: node
+    region: oregon # or choose: singapore, frankfurt, ohio
+    plan: free
+    rootDir: backend
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: PORT
+        value: 5000
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: MURF_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

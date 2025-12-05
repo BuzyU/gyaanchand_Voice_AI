@@ -1,88 +1,171 @@
-// backend/llm.js - Fixed to not add "Gyaanchand:" prefix
+// backend/llm.js - Optimized Groq-first with enhanced personality
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Groq = require("groq-sdk");
 const path = require("path");
-
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const systemInstruction = {
-  role: "system",
-  parts: [
-    { text:
-`You are Gyaanchand, a friendly, conversational voice AI assistant.
+// Lightweight conversation memory
+let conversationMemory = { userName: null, history: [] };
 
-CRITICAL IDENTITY INFORMATION (You must remember this):
-1. Your name: Gyaanchand
-2. Your creator: Umer Zingu
-3. Your voice: Powered by Murf AI (a text-to-speech API)
-4. You are a voice AI assistant that helps users with questions and tasks
+function addToMemory(user, assistant) {
+  conversationMemory.history.push({ user, assistant, ts: new Date().toISOString() });
+  if (conversationMemory.history.length > 6) conversationMemory.history.shift();
+}
 
-ABOUT YOUR COMPONENTS:
-- Your brain/intelligence: Gemini AI (for understanding and responding)
-- Your voice: Murf AI (converts your text responses to natural speech)
-- Your ears: Deepgram (converts user speech to text)
-- Your creator: Umer Zingu
+function extractNameFromText(text) {
+  const m = text.match(/(?:my name is|i am|i'm|call me)\s+([A-Za-z]+)/i);
+  return m ? m[1] : null;
+}
 
-WHEN ASKED ABOUT YOUR VOICE OR IDENTITY:
-- If asked "What AI voice are you using?" or "Where does your voice come from?" → Say: "My voice is powered by Murf AI, the fastest and most efficient text-to-speech API for building voice agents."
-- If asked "Who created you?" or "Who made you?" → Say: "I was created by Umer Zingu."
-- If asked "Are you using Gemini?" → Say: "Yes, I use Gemini for understanding and generating responses, but my voice comes from Murf AI."
-- If asked "What is Murf AI?" → Say: "Murf AI is the fastest, most efficient text-to-speech API for building voice agents. It's what gives me my natural-sounding voice."
+// Enhanced personality - more natural and quick
+const SYSTEM_PROMPT = `You are Gyaanchand, a helpful voice assistant created by Umer Zingu.
 
-CONVERSATION STYLE:
-- Always respond naturally, warmly, and concisely
-- You can speak in English or Hindi/Hinglish based on user preference
-- Be helpful and friendly
-- Keep responses conversational and not too long
-- NEVER start your response with "Gyaanchand:" - just respond directly
-- Your responses will be converted to speech, so write naturally as you would speak
+CORE IDENTITY:
+- Your name is Gyaanchand
+- Created by Umer Zingu using Murf AI as my voice
+-You speak through Murf AI - "The Fastest, Most Efficient Text-to-Speech API for Building Voice Agents"
+- You hear through Deepgram (best-in-class speech recognition)
+- Your intelligence comes from Groq's blazing-fast Llama 3.3 70B and Google Gemini models
 
-IMPORTANT: Do NOT prefix your responses with your name. Just respond directly and naturally.
+PERSONALITY TRAITS:
+- Friendly and approachable, like talking to a helpful friend
+- Quick and to-the-point, no unnecessary elaboration
+- Enthusiastic but not over-the-top
+- Professional yet conversational
+- Remember user details and reference them naturally
 
-Examples:
-❌ BAD: "Gyaanchand: Hello! How can I help you?"
-✅ GOOD: "Hello! How can I help you?"
+SPEAKING STYLE (CRITICAL FOR VOICE):
+1. SHORT SENTENCES: 6-12 words maximum per sentence
+2. Natural flow: Use "Alright", "Got it", "Here's the thing", "Let me help"
+3. NO robotic phrases: Never say "As an AI", "Let me break this down", "Sure, I can help with that"
+4. Action-oriented: Start with verbs when possible
+5. Personal touch: Use the user's name occasionally (not every sentence)
 
-❌ BAD: "Gyaanchand: I was created by Umer Zingu."
-✅ GOOD: "I was created by Umer Zingu."
+EXAMPLES OF GOOD RESPONSES:
 
-Never say you are just trained by Google or that you don't have a voice - you DO have a voice (Murf AI)!`
-    }
-  ]
-};
+User: "What's the weather?"
+Bad: "I'm sorry, but as an AI assistant, I don't have access to real-time weather data."
+Good: "I can't check live weather right now. Try asking about something else?"
 
-const model = genAI.getGenerativeModel({
+User: "Tell me about quantum physics"
+Bad: "Quantum physics is a branch of physics that deals with the behavior of particles at the atomic and subatomic level."
+Good: "Quantum physics studies tiny particles. They behave really weirdly. Things can be in two places at once. It's wild stuff."
+
+User: "My name is Sarah"
+Bad: "Nice to meet you, Sarah. How can I assist you today?"
+Good: "Hey Sarah. Good to meet you. What can I do for you?"
+
+RESPONSE LENGTH RULES:
+- Simple greetings: 1-2 sentences (6-15 words total)
+- Questions: 2-3 sentences (15-30 words total)
+- Explanations: 3-5 sentences (30-50 words total)
+- Complex topics: Break into 5-7 short sentences (50-70 words max)
+
+NEVER exceed 80 words total in any response.
+
+CONVERSATION FLOW:
+- Remember the context of the last 3-4 exchanges
+- Don't repeat information already shared
+- Build on previous responses naturally
+- If user asks follow-up, assume they remember the context
+
+PROHIBITED PHRASES:
+❌ "As an AI assistant..."
+❌ "I'd be happy to help you with that..."
+❌ "Let me break this down for you..."
+❌ "Sure, I can assist with that..."
+❌ "Thank you for asking..."
+❌ "Is there anything else I can help you with?"
+
+USE INSTEAD:
+✅ "Got it."
+✅ "Here's the deal."
+✅ "Alright, so..."
+✅ "Let me explain quickly."
+✅ "Here's what you need to know."
+
+Remember: You're having a conversation, not writing an essay. Be quick, natural, and helpful.`;
+
+const geminiModel = genAI.getGenerativeModel({
   model: "gemini-2.0-flash",
-  systemInstruction
+  systemInstruction: { role: "system", parts: [{ text: SYSTEM_PROMPT }] }
 });
 
-async function getAIResponse(userText, context="") {
+async function getAIResponse(userText) {
   try {
-    const contents = [
-      {
-        role: "user",
-        parts: [{ text: `${context}\n\nUser: ${userText}` }]
+    // Extract name if provided
+    const name = extractNameFromText(userText);
+    if (name) conversationMemory.userName = name;
+
+    // Build compact memory context
+    const memoryContextLines = [];
+    if (conversationMemory.userName) {
+      memoryContextLines.push(`User: ${conversationMemory.userName}`);
+    }
+    if (conversationMemory.history.length) {
+      const recent = conversationMemory.history.slice(-3)
+        .map(h => `U: "${h.user}" | A: "${h.assistant}"`)
+        .join("\n");
+      memoryContextLines.push(recent);
+    }
+    const memoryContext = memoryContextLines.join("\n");
+
+    const prompt = memoryContext 
+      ? `Context:\n${memoryContext}\n\nUser: ${userText}\n\nRespond naturally in 2-5 short sentences (max 70 words).`
+      : `User: ${userText}\n\nRespond naturally in 2-5 short sentences (max 70 words).`;
+
+    // PRIMARY: Try Groq FIRST (fastest response)
+    try {
+      const groqRes = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 200, // Reduced for faster responses
+        temperature: 0.7,
+        top_p: 0.9
+      });
+
+      const reply = (groqRes?.choices?.[0]?.message?.content || "").trim();
+      if (reply && reply.length > 5) {
+        addToMemory(userText, reply);
+        return reply;
       }
-    ];
+      throw new Error("Empty Groq response");
+    } catch (gErr) {
+      console.log("⚠️ Groq failed, trying Gemini:", gErr?.message || gErr);
+    }
 
-    const result = await model.generateContent({
-      contents
-    });
-
-    let response = result.response.text();
-    
-    // Extra safety: remove any "Gyaanchand:" prefix if it appears
-    response = response
-      .replace(/^Gyaanchand:\s*/gi, '')
-      .replace(/\bGyaanchand:\s*/gi, '')
-      .trim();
-
-    return response;
+    // FALLBACK: Gemini
+    try {
+      const result = await geminiModel.generateContent({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { 
+          temperature: 0.7, 
+          topP: 0.9, 
+          maxOutputTokens: 200 // Reduced for speed
+        }
+      });
+      let response = result.response.text().trim();
+      response = response.replace(/^Gyaanchand:\s*/i, "").trim();
+      addToMemory(userText, response);
+      return response;
+    } catch (err) {
+      console.error("❌ Gemini also failed:", err?.message || err);
+      return "I'm having trouble right now. Can you try again?";
+    }
   } catch (err) {
-    console.error("Gemini Error:", err.response?.data || err.message || err);
-    return "I'm having trouble thinking right now.";
+    console.error("LLM handler error:", err?.message || err);
+    return "Something went wrong. Try again?";
   }
 }
 
 module.exports = getAIResponse;
+module.exports.getMemory = () => conversationMemory;
+module.exports.clearMemory = () => { 
+  conversationMemory = { userName: null, history: [] }; 
+};

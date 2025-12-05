@@ -1,42 +1,41 @@
-// backend/voiceStyle.js
+// backend/voiceStyle.js - conversationalize + sanitize helper
 function conversationalize(text) {
-  if (!text || text.trim().length === 0) 
-    return "Hmm... I didn’t quite catch that, let me say it again.";
+  if (!text || !text.trim()) return "I didn't catch that, please say it again.";
 
   text = text.trim();
   text = text.replace(/\s+/g, " ");
   text = text.replace(/\.{2,}/g, ".");
-  text = text.replace(/,/g, ", ");
+  // Normalize punctuation
+  text = text.replace(/[“”«»]/g, '"').replace(/[‘’]/g, "'");
   if (!text.endsWith(".")) text += ".";
 
-  if (Math.random() < 0.35) {
-    text = "Hmm… " + text;
-  }
-
-  text = text.replace(/\bbut\b/gi, "but…");
-  text = text.replace(/\bbecause\b/gi, "because…");
-  text = text.replace(/\bso\b/gi, "so…");
-
-  if (text.length > 140) {
-    text = text.replace(/, /g, "… ");
-    text = text.replace(/\. /g, ".  ");
-  }
-
+  // Minimal warmers but avoid random intros that break TTS
   const warmeners = [
-    "Alright, let me explain this naturally. ",
-    "Sure, here’s how I’d say it. ",
-    "Okay, I’ll put this in a simple way. ",
-    "Let’s break this down together. ",
-    "Here's the way I’d think about it. "
+    "Let me explain this simply. ",
+    "Here's a clear explanation. ",
+    "Let's break it down. "
   ];
 
-  if (Math.random() < 0.50) {
-    const intro = warmeners[Math.floor(Math.random() * warmeners.length)];
-    text = intro + text;
+  // Keep it deterministic-ish: use first warmener 30% of time
+  if (Math.random() < 0.30) {
+    text = warmeners[Math.floor(Math.random() * warmeners.length)] + text;
   }
 
-  text += "  ";
+  // gentle pacing: add extra pause markers (period + two spaces)
+  text = text.replace(/\. /g, ".  ");
+
+  return text;
+}
+
+// small sanitizer for TTS - can be used separately if needed
+function sanitizeForTTS(text) {
+  if (!text) return "";
+  text = text.replace(/[“”«»]/g, '"');
+  text = text.replace(/[‘’]/g, "'");
+  text = text.replace(/…/g, "...");
+  text = text.replace(/\s+/g, " ").trim();
   return text;
 }
 
 module.exports = conversationalize;
+module.exports.sanitizeForTTS = sanitizeForTTS;

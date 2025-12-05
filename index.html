@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎙️ Gyaanchand Voice AI - Enhanced</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1729 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    .header h1 {
+      font-size: 3.5rem;
+      background: linear-gradient(90deg, #00d4ff, #00ff88, #00d4ff);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      animation: gradientShift 3s ease infinite;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .header-subtitle {
+      color: #a0a0a0;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+    }
+
+    .credits {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: #888;
+    }
+
+    .credits .creator {
+      color: #00d4ff;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .tech-stack {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tech-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: default;
+    }
+
+    .tech-badge:hover {
+      transform: translateY(-2px);
+    }
+
+    .badge-deepgram { 
+      background: rgba(0, 212, 255, 0.15); 
+      color: #00d4ff; 
+      border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+    .badge-murf { 
+      background: rgba(168, 85, 247, 0.15); 
+      color: #c084fc; 
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .badge-gemini { 
+      background: rgba(16, 185, 129, 0.15); 
+      color: #34d399; 
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge-groq { 
+      background: rgba(245, 158, 11, 0.15); 
+      color: #fbbf24; 
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Status Bar */
+    .status-bar {
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 20px 30px;
+      margin-bottom: 25px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      transition: all 0.4s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-bar.connected {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.08);
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+    }
+
+    .status-bar.listening {
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.08);
+      animation: pulseListening 2s ease infinite;
+      box-shadow: 0 8px 32px rgba(0, 212, 255, 0.3);
+    }
+
+    .status-bar.thinking {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.08);
+      box-shadow: 0 8px 32px rgba(245, 158, 11, 0.2);
+    }
+
+    .status-bar.speaking {
+      border-color: #a855f7;
+      background: rgba(168, 85, 247, 0.08);
+      animation: pulseSpeaking 1.5s ease infinite;
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+    }
+
+    @keyframes pulseListening {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.02); opacity: 0.9; }
+    }
+
+    @keyframes pulseSpeaking {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    .status-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .status-icon {
+      font-size: 1.6rem;
+      animation: bounce 2s ease infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* Control Center */
+    .control-center {
+      margin-bottom: 35px;
+      animation: fadeInUp 0.8s ease;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 25px;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .btn-main {
+      padding: 22px 65px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-main::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-main:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn-main > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #00d4ff, #10b981);
+      color: white;
+    }
+
+    .btn-start:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 50px rgba(0, 212, 255, 0.5);
+    }
+
+    .btn-stop {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .btn-stop:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 50px rgba(239, 68, 68, 0.5);
+    }
+
+    .btn-main:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Voice Selector */
+    .voice-control {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 20px 28px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      min-width: 280px;
+    }
+
+    .voice-control:hover {
+      border-color: #a855f7;
+      background: rgba(168, 85, 247, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .voice-label {
+      color: #c084fc;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .voice-selector {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .voice-selector:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #a855f7;
+    }
+
+    .voice-selector:focus {
+      border-color: #c084fc;
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+    }
+
+    .voice-selector option {
+      background: #1a1f3a;
+      color: white;
+      padding: 10px;
+    }
+
+    /* Main Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1.2fr;
+      gap: 25px;
+      animation: fadeIn 1s ease;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Panels */
+    .panel {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 25px;
+      backdrop-filter: blur(15px);
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .panel:hover {
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel h3 {
+      font-size: 1.4rem;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .panel.cyan h3 { color: #00d4ff; }
+    .panel.green h3 { color: #34d399; }
+    .panel.purple h3 { color: #c084fc; }
+    .panel.orange h3 { color: #fbbf24; }
+
+    .content-area {
+      max-height: 380px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
+      padding-right: 5px;
+    }
+
+    .content-area::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content-area::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .content-area::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 10px;
+    }
+
+    .content-area::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Messages */
+    .message {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .message:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .message.final {
+      background: rgba(0, 212, 255, 0.1);
+      border-left: 4px solid #00d4ff;
+    }
+
+    .message.interim {
+      background: rgba(255, 255, 255, 0.03);
+      color: #888;
+      font-style: italic;
+    }
+
+    .message.reply {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid #34d399;
+    }
+
+    .message strong {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 35px;
+      text-align: center;
+      transition: all 0.3s ease;
+      margin-bottom: 25px;
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+    }
+
+    .upload-zone:hover {
+      border-color: #a855f7;
+      background: rgba(168, 85, 247, 0.05);
+      transform: translateY(-2px);
+    }
+
+    .upload-zone.dragging {
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.1);
+      transform: scale(1.02);
+    }
+
+    .upload-icon {
+      font-size: 3.5rem;
+      margin-bottom: 15px;
+      animation: float 3s ease infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .upload-zone input[type="file"] {
+      display: none;
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, #a855f7, #9333ea);
+      color: white;
+      padding: 14px 35px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.3);
+    }
+
+    .upload-btn:hover {
+      background: linear-gradient(135deg, #9333ea, #7e22ce);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);
+    }
+
+    .file-info {
+      margin-top: 15px;
+      color: #34d399;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* Memory Items */
+    .memory-item {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      border-left: 3px solid #c084fc;
+    }
+
+    .memory-label {
+      font-size: 0.75rem;
+      color: #c084fc;
+      font-weight: 800;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Feature List */
+    .feature-list {
+      list-style: none;
+    }
+
+    .feature-list li {
+      padding: 10px 0;
+      color: #d0d0d0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .feature-list li:hover {
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .empty-state {
+      color: #666;
+      font-style: italic;
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 0.95rem;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.5rem;
+      }
+      
+      .control-row {
+        flex-direction: column;
+      }
+      
+      .btn-main {
+        padding: 18px 50px;
+        font-size: 1.2rem;
+      }
+      
+      .voice-control {
+        width: 100%;
+        max-width: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎙️ Gyaanchand</h1>
+      <p class="header-subtitle">⚡ Lightning-Fast Voice AI with Document Analysis</p>
+      <div class="credits">
+        Created by <span class="creator">Umer Zingu</span>
+      </div>
+      <div class="tech-stack">
+        <div class="tech-badge badge-deepgram">🎧 Deepgram</div>
+        <div class="tech-badge badge-murf">🗣️ Murf AI</div>
+        <div class="tech-badge badge-gemini">🧠 Gemini</div>
+        <div class="tech-badge badge-groq">⚡ Groq</div>
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div class="status-text" id="statusText">
+        <span class="status-icon">⏳</span>
+        <span>Connecting...</span>
+      </div>
+    </div>
+
+    <div class="control-center">
+      <div class="control-row">
+        <div class="control-group">
+          <button class="btn-main btn-start" id="liveBtn" disabled>
+            <span id="btnIcon">🎤</span>
+            <span id="btnText">Start Live</span>
+          </button>
+        </div>
+        
+        <div class="voice-control">
+          <div class="voice-label">🎵 Voice Selection</div>
+          <select class="voice-selector" id="voiceSelector">
+            <optgroup label="🎙️ Male Voices" style="background-color: #0f1729;">
+              <option value="en-US-terrell" selected>Terrell - Natural & Conversational</option>
+              <option value="en-US-michael">Michael - Professional</option>
+              <option value="en-US-wayne">Wayne - Energetic</option>
+              <option value="en-US-ryan">Ryan - Warm & Friendly</option>
+            </optgroup>
+            <optgroup label="🎤 Female Voices" style="background-color: #981196;">
+              <option value="en-US-natalie">Natalie - Friendly</option>
+              <option value="en-US-lily">Lily - Clear & Bright</option>
+              <option value="en-US-claire">Claire - Warm</option>
+            </optgroup>
+            <optgroup label="🇬🇧 British Voices" style="background-color: #004d40;">
+              <option value="en-GB-william">William - British Male</option>
+              <option value="en-GB-emma">Emma - British Female</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="left-column">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">📄</div>
+          <p style="margin-bottom: 15px; color: #d0d0d0; font-weight: 600;">Upload Document</p>
+          <p style="margin-bottom: 15px; color: #888; font-size: 0.9rem;">PDF or DOCX files - Ask me anything about it!</p>
+          <input type="file" id="fileInput" accept=".pdf,.docx,.doc">
+          <label for="fileInput" class="upload-btn">Choose File</label>
+          <div class="file-info" id="fileInfo"></div>
+        </div>
+
+        <div class="panel cyan">
+          <h3>💬 Your Speech</h3>
+          <div class="content-area" id="transcriptArea">
+            <div class="empty-state">Your transcripts will appear here in real-time...</div>
+          </div>
+        </div>
+
+        <div class="panel green" style="margin-top: 25px;">
+          <h3>🤖 Gyaanchand's Response</h3>
+          <div class="content-area" id="replyArea">
+            <div class="empty-state">AI responses will appear here...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="panel purple">
+          <h3>🧠 Memory</h3>
+          <div class="content-area" id="memoryArea">
+            <div class="empty-state">Gyaanchand will remember your conversation context...</div>
+          </div>
+        </div>
+
+        <div class="panel orange" style="margin-top: 25px;">
+          <h3>🚀 Capabilities</h3>
+          <ul class="feature-list">
+            <li>⚡ Ultra-fast responses</li>
+            <li>🎯 Intelligent AI routing</li>
+            <li>📄 Document analysis (PDF, DOCX)</li>
+            <li>🧠 Conversation memory</li>
+            <li>🎵 9 natural voices</li>
+            <li>🎙️ Real-time transcription</li>
+            <li>🗣️ Streaming audio</li>
+            <li>⛔ Interrupt handling</li>
+          </ul>
+        </div>
+
+        <div class="panel" style="margin-top: 25px;">
+          <h3 style="color: #00d4ff;">ℹ️ About</h3>
+          <div style="font-size: 0.9rem; color: #ccc; line-height: 1.7;">
+            <p><strong style="color: #fff;">Creator:</strong> Umer Zingu</p>
+            <p style="margin-top: 12px;"><strong style="color: #fff;">Tech Stack:</strong></p>
+            <p style="margin-top: 8px;">• <strong>ASR:</strong> Deepgram Nova-2</p>
+            <p>• <strong>TTS:</strong> Murf AI</p>
+            <p>• <strong>AI:</strong> Gemini 1.5/2.0 + Groq Llama 3.3</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

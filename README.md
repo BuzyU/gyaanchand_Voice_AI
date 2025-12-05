@@ -20,6 +20,7 @@ https://drive.google.com/drive/folders/1k3DuqfJZYQ6CRQcCfz2mnCF2UwGsQOjb?usp=dri
 5.AI interruption handling
 6.UI status indicators updating live
 7.Weather + document query examples
+
 ---
 
 ## ✨ Features

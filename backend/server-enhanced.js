@@ -1,4 +1,4 @@
-// backend/server-enhanced.js - FIXED: Memory with location/date + Better interrupts
+// backend/server-enhanced.js - FIXED FOR RENDER DEPLOYMENT
 require("dotenv").config({ path: require("path").join(__dirname, "../.env") });
 const http = require("http");
 const express = require("express");
@@ -99,7 +99,7 @@ app.post("/upload", upload.single("document"), async (req, res) => {
       documentText = pdfData.text;
       console.log(`✅ [PDF] ${pdfData.numpages} pages, ${documentText.length} chars (${Date.now() - startTime}ms)`);
     } else if (ext === ".docx" || ext === ".doc") {
-      console.log("📝 [DOCX] Parsing...");
+      console.log("📘 [DOCX] Parsing...");
       const result = await mammoth.extractRawText({ path: filePath });
       documentText = result.value;
       console.log(`✅ [DOCX] ${documentText.length} chars (${Date.now() - startTime}ms)`);
@@ -214,7 +214,6 @@ function openDeepgramSocket(clientWs, sessionId) {
   let transcriptTimeout = null;
   let currentTTSController = null;
   
-  // Get session memory
   const session = getOrCreateSession(sessionId);
   const memory = session.memory;
 
@@ -223,7 +222,6 @@ function openDeepgramSocket(clientWs, sessionId) {
       memory.lastUserMessages.push(userMsg);
       if (memory.lastUserMessages.length > 4) memory.lastUserMessages.shift();
       
-      // Extract and save location
       const location = extractLocation(userMsg);
       if (location) {
         memory.location = location;
@@ -282,25 +280,21 @@ function openDeepgramSocket(clientWs, sessionId) {
         const isFinal = data.is_final || false;
         const confidence = channel.alternatives[0].confidence || 0;
 
-        // ✅ IMPROVED: Better interrupt handling
         if (processingAudio && !isFinal && transcript.length > 3) {
           console.log("\n⛔ [INTERRUPT] User speaking detected\n");
 
-          // Cancel current TTS
           if (currentTTSController) {
             console.log("🛑 [INTERRUPT] Aborting TTS");
             currentTTSController.abort();
             currentTTSController = null;
           }
 
-          // Stop audio playback on client
           try {
             clientWs.send(JSON.stringify({ type: "stop_audio" }));
           } catch (e) {}
 
           processingAudio = false;
           
-          // Clear any pending transcript timeout
           if (transcriptTimeout) {
             clearTimeout(transcriptTimeout);
             transcriptTimeout = null;
@@ -334,7 +328,6 @@ function openDeepgramSocket(clientWs, sessionId) {
               })
             );
 
-            // Detect name
             const nameMatch = transcript.match(
               /(?:my name is|i am|i'm|call me)\s+([A-Za-z]+)/i
             );
@@ -361,7 +354,6 @@ function openDeepgramSocket(clientWs, sessionId) {
                   );
 
                   try {
-                    // Build memory context with location and date
                     let memoryContext = "";
                     if (memory.userName) {
                       memoryContext += `User: ${memory.userName}\n`;
@@ -613,14 +605,17 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+// ✅ CRITICAL FIX FOR RENDER: Bind to 0.0.0.0 and use PORT from environment
+const PORT = process.env.PORT || 10000;
+const HOST = '0.0.0.0'; // Important for Render!
+
+server.listen(PORT, HOST, () => {
   console.log("\n" + "=".repeat(70));
-  console.log("🚀 Gyaanchand Voice AI");
+  console.log("🚀 Gyaanchand Voice AI - DEPLOYED ON RENDER");
   console.log("=".repeat(70));
-  console.log(`📡 WebSocket: ws://localhost:${PORT}`);
-  console.log(`📤 Upload: http://localhost:${PORT}/upload`);
-  console.log(`💚 Health: http://localhost:${PORT}/health`);
+  console.log(`📡 Server listening on ${HOST}:${PORT}`);
+  console.log(`📤 Upload: http://${HOST}:${PORT}/upload`);
+  console.log(`💚 Health: http://${HOST}:${PORT}/health`);
   console.log(`\n🎙️ STACK:`);
   console.log(`   • Creator: Umer Zingu`);
   console.log(`   • ASR: Deepgram Nova-2`);
@@ -631,7 +626,7 @@ server.listen(PORT, () => {
 
 // Graceful shutdown
 function gracefulShutdown(signal) {
-  console.log(`\n📴 [SHUTDOWN] ${signal}`);
+  console.log(`\n🔴 [SHUTDOWN] ${signal}`);
   
   wss.close(() => {
     console.log("✅ WebSocket closed");

@@ -1,6 +1,8 @@
-// app.js - UPDATED: Enhanced memory display with location and date
+// app.js - UPDATED: Fixed WebSocket URL for Render deployment
+
+// ✅ UPDATED: Properly handle WebSocket connections for both local and production
 const WS_URL = window.location.hostname === 'localhost' 
-  ? 'ws://localhost:5000' 
+  ? 'ws://localhost:10000'  // Changed from 5000 to 10000 to match server
   : `wss://${window.location.hostname}`;
 
 let ws = null;
@@ -32,6 +34,7 @@ const fileInfo = document.getElementById('fileInfo');
 const voiceSelector = document.getElementById('voiceSelector');
 
 console.log('🚀 Gyaanchand Voice AI - Initializing');
+console.log('📡 WebSocket URL:', WS_URL);
 
 // Initialize session ID
 function initSessionId() {
@@ -80,6 +83,7 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 2000;
 
 function connectWebSocket() {
+  console.log('🔌 Connecting to:', WS_URL);
   ws = new WebSocket(WS_URL);
   ws.binaryType = 'arraybuffer';
 
@@ -262,7 +266,6 @@ function stopAudio() {
 async function cleanupMicrophone() {
   console.log('🧹 Cleaning up microphone...');
   
-  // Stop AudioWorklet
   if (audioWorkletNode) {
     try {
       audioWorkletNode.port.onmessage = null;
@@ -273,7 +276,6 @@ async function cleanupMicrophone() {
     audioWorkletNode = null;
   }
 
-  // Close AudioContext
   if (micContext && micContext.state !== 'closed') {
     try {
       await micContext.close();
@@ -283,7 +285,6 @@ async function cleanupMicrophone() {
     micContext = null;
   }
 
-  // Stop media tracks
   if (mediaStream) {
     mediaStream.getTracks().forEach(track => {
       track.stop();
@@ -452,7 +453,7 @@ liveBtn.onclick = async () => {
   }
 };
 
-// File upload
+// File upload - ✅ UPDATED: Dynamic upload URL
 fileInput.onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -463,9 +464,12 @@ fileInput.onchange = async (e) => {
   try {
     updateStatus('📤 Uploading document...', 'thinking');
     
+    // ✅ UPDATED: Use same logic as WebSocket URL
     const UPLOAD_URL = window.location.hostname === 'localhost'
-      ? 'http://localhost:5000/upload'
+      ? 'http://localhost:10000/upload'  // Changed from 5000 to 10000
       : `https://${window.location.hostname}/upload`;
+
+    console.log('📤 Uploading to:', UPLOAD_URL);
 
     const response = await fetch(UPLOAD_URL, {
       method: 'POST',
@@ -551,7 +555,6 @@ function displayReply(text, route) {
   replyArea.insertBefore(div, replyArea.firstChild);
 }
 
-// ✅ UPDATED: Enhanced memory display with location and date
 function displayMemory(memory) {
   if (!memory || (!memory.userName && !memory.location && !memory.date && (!memory.history || memory.history.length === 0))) {
     memoryArea.innerHTML = '<div class="empty-state">Conversation memory will appear here...</div>';
@@ -560,7 +563,6 @@ function displayMemory(memory) {
 
   let html = '';
 
-  // Display user name
   if (memory.userName) {
     html += `<div class="memory-item">
       <div class="memory-label">👤 User</div>
@@ -568,7 +570,6 @@ function displayMemory(memory) {
     </div>`;
   }
 
-  // Display location
   if (memory.location) {
     html += `<div class="memory-item">
       <div class="memory-label">📍 Location</div>
@@ -576,7 +577,6 @@ function displayMemory(memory) {
     </div>`;
   }
 
-  // Display date
   if (memory.date) {
     html += `<div class="memory-item">
       <div class="memory-label">📅 Date</div>
@@ -584,7 +584,6 @@ function displayMemory(memory) {
     </div>`;
   }
 
-  // Display recent conversation
   if (memory.history && memory.history.length > 0) {
     html += `<div class="memory-item">
       <div class="memory-label">💬 Recent</div>`;

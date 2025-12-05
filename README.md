@@ -146,39 +146,6 @@ Navigate to `http://localhost:5000`
 
 ---
 
-## 🚀 Deployment
-
-### Vercel Deployment
-
-1. **Install Vercel CLI**
-```bash
-npm i -g vercel
-```
-
-2. **Set up environment variables**
-```bash
-vercel env add DEEPGRAM_API_KEY
-vercel env add MURF_API_KEY
-vercel env add GEMINI_API_KEY
-vercel env add GROQ_API_KEY
-vercel env add OPENWEATHER_API_KEY
-```
-
-3. **Deploy**
-```bash
-vercel --prod
-```
-
-### Environment Variables on Vercel
-Add these as secrets in your Vercel project settings:
-- `deepgram_api_key`
-- `murf_api_key`
-- `gemini_api_key`
-- `groq_api_key`
-- `openweather_api_key`
-
----
-
 ## 📖 Usage Guide
 
 ### Basic Conversation

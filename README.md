@@ -1,6 +1,6 @@
 # 🎙️ Gyaanchand Voice AI
 
-**A  intelligent voice assistant powered by state-of-the-art AI models and the world's fastest TTS API Murf AI.**
+**A  intelligent voice assistant powered by Murf Falcon**
 
 Created by **Umer Zingu**
 
@@ -229,6 +229,19 @@ Gyaanchand remembers:
 3. **AI Processing** → Router → Gemini/Groq → Response
 4. **Speech Synthesis** → Murf AI → Audio chunks
 5. **Audio Playback** → WebSocket → Queue → Speakers
+
+
+[User voice] 
+      │  (microphone via browser)
+      ▼
+[Deepgram ASR] ── live transcription ──▶  
+      ▼  
+[Gemini LLM if fallback Grok LLM] ── generates response text ──▶  
+      ▼  
+[Murf Falcon TTS] ── generates audio ──▶  
+      ▼  
+[Browser Audio Output] ── user hears reply
+
 
 ---
 
